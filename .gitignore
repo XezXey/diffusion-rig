@@ -1,3 +1,23 @@
 .vscode/
 __pycache__/
 
+data/.DS_Store
+data/deca_model.tar
+data/fixed_displacement_256.npy
+data/FLAME_masks_face-id.pkl
+data/FLAME_masks.pkl
+data/FLAME_texture.npz
+data/FLAME2020.zip
+data/generic_model.pkl
+data/head_template.obj
+data/landmark_embedding.npy
+data/mean_texture.jpg
+data/Readme.pdf
+data/texture_data_256.npy
+data/TextureSpace.zip
+data/uv_face_eye_mask.png
+data/uv_face_mask.png
+data/FLAME2020/female_model.pkl
+data/FLAME2020/male_model.pkl
+data/FLAME2020/Readme.pdf
+model_checkpoints/stage1_model050000.pt

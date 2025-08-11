@@ -20,6 +20,7 @@ class FAN(object):
     def __init__(self):
         import face_alignment
         self.model = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+        # self.model = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False)
 
     def run(self, image):
         '''
