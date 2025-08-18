@@ -42,7 +42,7 @@ class FLAME(nn.Module):
     """
     def __init__(self, config):
         super(FLAME, self).__init__()
-        print("creating the FLAME Decoder")
+        print("[#] Creating the FLAME Decoder.")
         with open(config.flame_model_path, 'rb') as f:
             ss = pickle.load(f, encoding='latin1')
             flame_model = Struct(**ss)

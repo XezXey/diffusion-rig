@@ -31,17 +31,29 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 import pickle
 from utils.logging import createLogger
+
 logger = createLogger()
 
+# Seed everything
+import random
+seed = 47
+logger.warning(f"Global seed set to {seed}")
+os.environ["PL_GLOBAL_SEED"] = str(seed)
+random.seed(seed)
+np.random.seed(seed)
+th.manual_seed(seed)
+th.cuda.manual_seed_all(seed)
+
 def create_inter_data(dataset, modes, meanshape_path="", 
-                      mani_light_dict = {"mani_light": "rotate_sh", "rotate_sh_axis": 2, "num_frames": 60, "use_self_light": True}):
+                      mani_light_dict = {"mani_light": "rotate_sh", "rotate_sh_axis": 2, "num_frames": 60, "use_self_light": True}, deca=None):
 
     # Build DECA
-    deca_cfg.model.use_tex = True
-    deca_cfg.model.tex_path = "data/FLAME_texture.npz"
-    deca_cfg.model.tex_type = "FLAME"
-    deca_cfg.rasterizer_type = "pytorch3d"
-    deca = DECA(config=deca_cfg)
+    if deca is None:
+        deca_cfg.model.use_tex = True
+        deca_cfg.model.tex_path = "data/FLAME_texture.npz"
+        deca_cfg.model.tex_type = "FLAME"
+        deca_cfg.rasterizer_type = "pytorch3d"
+        deca = DECA(config=deca_cfg)
 
     meanshape = None
     if os.path.exists(meanshape_path):
@@ -151,7 +163,7 @@ def create_inter_data(dataset, modes, meanshape_path="",
 
 def main():
     
-    def run(imagepath_list, vis_dir):
+    def run(imagepath_list, vis_dir, src_id, dst_id, deca=None):
         dataset = deca_dataset.TestData(imagepath_list, iscrop=True, size=args.image_size)
 
         modes = args.modes.split(",")
@@ -162,7 +174,7 @@ def main():
             "num_frames": args.num_frames,
             "use_self_light": args.use_self_light,
         }
-        data = create_inter_data(dataset, modes, args.meanshape, mani_light_dict=mani_light_dict)
+        data = create_inter_data(dataset, modes, args.meanshape, mani_light_dict=mani_light_dict, deca=deca)
 
         sample_fn = (
             diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop
@@ -216,7 +228,7 @@ def main():
                 # save_image(
                 #     sample, os.path.join(vis_dir, "{}_".format(idx) + batch["mode"]) + ".png"
                 # )
-        all_output = th.cat(all_output, dim=0)
+        all_output = th.cat(all_output, dim=0)  # B, C, H, W
         
         # Save output frames
         # albedo = [0, 1]
@@ -248,6 +260,12 @@ def main():
         torchvision.io.write_video(os.path.join(vis_dir, "out.mp4"), all_out, fps=24, video_codec='libx264', options={"crf": "18"})
         all_out_rt = np.concatenate((all_out, np.flip(all_out, axis=0)), axis=0)
         torchvision.io.write_video(os.path.join(vis_dir, "out_rt.mp4"), all_out_rt, fps=24, video_codec='libx264', options={"crf": "18"})
+        
+        if args.eval_dir is not None:
+            f_relit = all_output[-1]
+            eval_dir = f"{args.eval_dir}/{args.dataset}/out/"
+            os.makedirs(eval_dir, exist_ok=True)
+            torchvision.utils.save_image(tensor=f_relit, fp=f"{eval_dir}/input={src_id}#pred={dst_id}.png")
 
     args = create_argparser().parse_args()
 
@@ -304,6 +322,16 @@ def main():
    
     
     to_run_idx = tqdm.tqdm(to_run_idx, desc="Processing indices", total=len(to_run_idx), unit="index")
+    logger.warning("Initializing DECA...")
+    if args.init_deca_once:
+        deca_cfg.model.use_tex = True
+        deca_cfg.model.tex_path = "data/FLAME_texture.npz"
+        deca_cfg.model.tex_type = "FLAME"
+        deca_cfg.rasterizer_type = "pytorch3d"
+        deca = DECA(config=deca_cfg)
+    else:
+        deca = None
+    
     for idx in to_run_idx:
         pair = sample_pairs_v[idx]
         pair_id = sample_pairs_k[idx]
@@ -321,10 +349,8 @@ def main():
 
         vis_dir = f'{args.save_path}/src={pair["src"]}_dst={pair["dst"]}/n_step={args.num_frames}/'
         os.makedirs(vis_dir, exist_ok=True)
-        run(imagepath_list, vis_dir)
+        run(imagepath_list, vis_dir, src_id=pair["src"], dst_id=pair["dst"], deca=deca)
     
-
-
 
 def create_argparser():
     defaults = dict(
@@ -345,6 +371,8 @@ def create_argparser():
     parser.add_argument("--sample_pair_json", type=str, required=True, help="sample pair json file for DiFaReli++ comparison")
     parser.add_argument("--idx", nargs='+', type=int, default=[-1], help="index of the source spherical harmonics coefficients to rotate")
     parser.add_argument("--save_path", type=str, required=True, help="result save path")
+    parser.add_argument("--eval_dir", type=str, default=None, help="evaluation directory to save only relit images.")
+    parser.add_argument("--init_deca_once", action='store_true', default=False, help="initialize DECA only once")
     # Light manipulation
     parser.add_argument("--num_frames", type=int, default=60, help="number of frames for light manipulation")
     parser.add_argument('--use_self_light', action='store_true', default=False, help='Use self light for light mode')
