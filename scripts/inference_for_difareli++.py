@@ -45,7 +45,7 @@ th.manual_seed(seed)
 th.cuda.manual_seed_all(seed)
 
 def create_inter_data(dataset, modes, meanshape_path="", 
-                      mani_light_dict = {"mani_light": "rotate_sh", "rotate_sh_axis": 2, "num_frames": 60, "use_self_light": True}, deca=None):
+                      mani_light_dict = {"mani_light": "rotate_sh", "rotate_sh_axis": 2, "num_frames": 60, "use_self_light": True, "scale_sh": 1.0}, deca=None):
 
     # Build DECA
     if deca is None:
@@ -73,6 +73,7 @@ def create_inter_data(dataset, modes, meanshape_path="",
     mani_light = mani_light_dict["mani_light"]
     rotate_sh_axis = mani_light_dict["rotate_sh_axis"]
     num_frames = mani_light_dict["num_frames"]
+    scale_sh = mani_light_dict.get("scale_sh", 1.0)
 
     for i in range(len(dataset) - 1):
 
@@ -122,6 +123,7 @@ def create_inter_data(dataset, modes, meanshape_path="",
                     raise NotImplementedError(f"[#] Only 'rotate_sh' and 'interp_sh' modes are implemented, got {mani_light}.")
                 
                 target_light = th.tensor(target_light, dtype=th.float32).to("cuda")  # [num_frames, 9, 3]
+                target_light = target_light * scale_sh  # Scale the light coefficients
                 code["light"] = target_light  # [num_frames, 9, 3]
             else: 
                 raise NotImplementedError(f"[#] Only 'light' mode is implemented, got {mode}.")
@@ -173,6 +175,7 @@ def main():
             "rotate_sh_axis": args.rotate_sh_axis,
             "num_frames": args.num_frames,
             "use_self_light": args.use_self_light,
+            "scale_sh": args.scale_sh,
         }
         data = create_inter_data(dataset, modes, args.meanshape, mani_light_dict=mani_light_dict, deca=deca)
 
@@ -307,6 +310,7 @@ def main():
     logger.warning("DiffusionRig's light manipulation...")
     logger.info(f"[#] Manipulated light: {args.mani_light}")
     logger.info(f"[#] Rotate SH axis (affect if mani_light = rotate_sh): {args.rotate_sh_axis}")
+    logger.info(f"[#] Scale SH: {args.scale_sh}")
     logger.info(f"[#] Use self light: {args.use_self_light}")
     logger.info(f"[#] Use mean shape: {args.meanshape}")
     logger.warning("DiffusionRig's running on...")
@@ -378,7 +382,8 @@ def create_argparser():
     parser.add_argument('--use_self_light', action='store_true', default=False, help='Use self light for light mode')
     parser.add_argument("--mani_light", type=str, required=True, help="manipulated light path for DiFaReli++ comparison")
     parser.add_argument("--rotate_sh_axis", type=int, default=2, help="axis to rotate spherical harmonics coefficients, 0 for x, 1 for y, 2 for z")
-    
+    parser.add_argument("--scale_sh", type=float, default=1.0, help="scale factor for spherical harmonics coefficients")
+
     add_dict_to_argparser(parser, defaults)
     return parser
 
