@@ -21,3 +21,4 @@ data/FLAME2020/female_model.pkl
 data/FLAME2020/male_model.pkl
 data/FLAME2020/Readme.pdf
 model_checkpoints/stage1_model050000.pt
+visualize_scripts/tuning_grid_diffusionrig
