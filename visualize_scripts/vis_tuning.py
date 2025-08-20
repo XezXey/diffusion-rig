@@ -105,8 +105,8 @@ def create_app():
             out += f"</tr>"
             for scale_sh in [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
                 img_dir = f'{args.sampling_dir}/src={src}_dst={dst}/scale_sh={scale_sh}/n_step={args.num_frames}/'
-                vid = f'{img_dir}/out_rt.mp4'
-                # vid = f'{img_dir}/res_rt.mp4'
+                # vid = f'{img_dir}/out_rt.mp4'
+                vid = f'{img_dir}/res_rt.mp4'
                 out += f"<td>"
                 if os.path.exists(vid):
                     if 'out_rt' in vid:
