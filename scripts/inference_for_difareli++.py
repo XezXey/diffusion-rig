@@ -351,7 +351,8 @@ def main():
             logger.warning(f"[!] Source image {imagepath_list[0]} does not exist, skipping index {idx}.")
             continue
 
-        vis_dir = f'{args.save_path}/src={pair["src"]}_dst={pair["dst"]}/scale_sh={args.scale_sh}/n_step={args.num_frames}/'
+        # vis_dir = f'{args.save_path}/src={pair["src"]}_dst={pair["dst"]}/scale_sh={args.scale_sh}/n_step={args.num_frames}/'
+        vis_dir = f'{args.save_path}/src={pair["src"]}/dst={pair["dst"]}/scale_sh={args.scale_sh}/n_frames={args.num_frames}/'
         os.makedirs(vis_dir, exist_ok=True)
         run(imagepath_list, vis_dir, src_id=pair["src"], dst_id=pair["dst"], deca=deca)
     
