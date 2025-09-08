@@ -1,7 +1,9 @@
 import os
 
 def get_data_path(dataset, set_, main_path="/data/mint/DPM_Dataset"):
-    if dataset == "ffhq_png":
+    if dataset == "ffhq":
+        data_path = f"{main_path}/ffhq_256_with_anno/ffhq_256/"
+    elif dataset == "ffhq_png":
         data_path = f"{main_path}/ffhq_256_with_anno/ffhq_256_no_aliasing_png/"
     elif dataset == "mp_test":
         data_path = f"{main_path}/MultiPIE/MultiPIE_testset/mp_aligned/"
